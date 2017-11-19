@@ -25,7 +25,7 @@ import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.Transaction;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    public static final String DATABASE_NAME = "simple_expenses.db";
+    public static final String DATABASE_NAME = "150073v.db";
     public static final int VERSION = 1;
 
     public DatabaseHelper(Context context) {
@@ -38,8 +38,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("create table if not exists account (account_no VARCHAR(30) primary key, bank_name text(100), account_holder_name text(200),balance NUMERIC(12,2), deleted INT(1) default 0)");
-        db.execSQL("create table if not exists transactions (transaction_id INTEGER primary key AUTOINCREMENT,account_no VARCHAR(30) , transaction_date Date, expense_type text(15),amount NUMERIC(12,2), deleted int(1) default 0, FOREIGN KEY(account_no) REFERENCES account(account_no))");
+        db.execSQL("create table if not exists account (acc_no VARCHAR(30) primary key, bank text(100), acc_owner text(200),balance NUMERIC(12,2), deleted INT(1) default 0)");
+        db.execSQL("create table if not exists transactions (transaction_id INTEGER primary key AUTOINCREMENT,acc_no VARCHAR(30) , trans_date Date, expense_type text(15),amount NUMERIC(12,2), deleted int(1) default 0, FOREIGN KEY(acc_no) REFERENCES account(acc_no))");
     }
 
     @Override
@@ -52,38 +52,38 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public boolean insertAccount (Account account) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
-        contentValues.put("account_no", account.getAccountNo());
-        contentValues.put("bank_name", account.getBankName());
-        contentValues.put("account_holder_name", account.getAccountHolderName());
+        contentValues.put("acc_no", account.getAccountNo());
+        contentValues.put("bank", account.getBankName());
+        contentValues.put("acc_owner", account.getAccountHolderName());
         contentValues.put("balance", account.getBalance());
         db.insert("account", null, contentValues);
         return true;
     }
 
-    public boolean insertTransaction (String account_no, String expense_type, String transaction_date, double amount) {
+    public boolean insertTransaction (String acc_no, String expense_type, String trans_date, double amount) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
-        contentValues.put("account_no", account_no);
+        contentValues.put("acc_no", acc_no);
         contentValues.put("expense_type", expense_type);
-        contentValues.put("transaction_date", transaction_date);
+        contentValues.put("trans_date", trans_date);
         contentValues.put("amount", amount);
         db.insert("transactions", null, contentValues);
         return true;
     }
 
-    public boolean deleteAccount (String account_no) {
+    public boolean deleteAccount (String acc_no) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("deleted", 1);
-        db.update("account", contentValues, "account_no = ? ", new String[]{account_no});
+        db.update("account", contentValues, "acc_no = ? ", new String[]{acc_no});
         return true;
     }
 
-    public boolean updateBalance (String account_no,double balance) {
+    public boolean updateBalance (String acc_no,double balance) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put("balance", balance);
-        db.update("account", contentValues, "account_no = ? ", new String[]{account_no});
+        db.update("account", contentValues, "acc_no = ? ", new String[]{acc_no});
         return true;
     }
 
@@ -94,7 +94,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         res.moveToFirst();
 
         while(res.isAfterLast() == false){
-            Account account = new Account(res.getString(res.getColumnIndex("account_no")),res.getString(res.getColumnIndex("bank_name")),res.getString(res.getColumnIndex("account_holder_name")),res.getDouble(res.getColumnIndex("balance")));
+            Account account = new Account(res.getString(res.getColumnIndex("acc_no")),res.getString(res.getColumnIndex("bank")),res.getString(res.getColumnIndex("acc_owner")),res.getDouble(res.getColumnIndex("balance")));
             array_list.add(account);
             res.moveToNext();
         }
@@ -103,10 +103,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Account getAccount(String accountNo) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "select * from account where account_no= '"+accountNo +"' and deleted=0", null );
+        Cursor res =  db.rawQuery( "select * from account where acc_no= '"+accountNo +"' and deleted=0", null );
         res.moveToFirst();
         while(res.isAfterLast() == false){
-            Account account = new Account(res.getString(res.getColumnIndex("account_no")),res.getString(res.getColumnIndex("bank_name")),res.getString(res.getColumnIndex("account_holder_name")),res.getDouble(res.getColumnIndex("balance")));
+            Account account = new Account(res.getString(res.getColumnIndex("acc_no")),res.getString(res.getColumnIndex("bank")),res.getString(res.getColumnIndex("acc_owner")),res.getDouble(res.getColumnIndex("balance")));
             return account;
         }
         return null;
@@ -119,7 +119,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         res.moveToFirst();
 
         while(res.isAfterLast() == false){
-            array_list.add(res.getString(res.getColumnIndex("account_no")));
+            array_list.add(res.getString(res.getColumnIndex("acc_no")));
             res.moveToNext();
         }
         return array_list;
@@ -134,15 +134,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date date = null;
             try {
-                date = dateFormat.parse(res.getString(res.getColumnIndex("transaction_date")));
+                date = dateFormat.parse(res.getString(res.getColumnIndex("trans_date")));
             } catch (ParseException e) {
                 e.printStackTrace();
             }
             Transaction account;
             if(res.getString(res.getColumnIndex("expense_type"))== "EXPENSE") {
-                account = new Transaction(date, res.getString(res.getColumnIndex("account_no")),ExpenseType.EXPENSE , res.getDouble(res.getColumnIndex("amount")));
+                account = new Transaction(date, res.getString(res.getColumnIndex("acc_no")),ExpenseType.EXPENSE , res.getDouble(res.getColumnIndex("amount")));
             }else{
-                account = new Transaction(date, res.getString(res.getColumnIndex("account_no")),ExpenseType.INCOME , res.getDouble(res.getColumnIndex("amount")));
+                account = new Transaction(date, res.getString(res.getColumnIndex("acc_no")),ExpenseType.INCOME , res.getDouble(res.getColumnIndex("amount")));
             }
             array_list.add(account);
             res.moveToNext();
@@ -159,15 +159,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date date = null;
             try {
-                date = dateFormat.parse(res.getString(res.getColumnIndex("transaction_date")));
+                date = dateFormat.parse(res.getString(res.getColumnIndex("trans_date")));
             } catch (ParseException e) {
                 e.printStackTrace();
             }
             Transaction account;
             if(res.getString(res.getColumnIndex("expense_type"))== "EXPENSE") {
-                account = new Transaction(date, res.getString(res.getColumnIndex("account_no")),ExpenseType.EXPENSE , res.getDouble(res.getColumnIndex("amount")));
+                account = new Transaction(date, res.getString(res.getColumnIndex("acc_no")),ExpenseType.EXPENSE , res.getDouble(res.getColumnIndex("amount")));
             }else{
-                account = new Transaction(date, res.getString(res.getColumnIndex("account_no")),ExpenseType.INCOME , res.getDouble(res.getColumnIndex("amount")));
+                account = new Transaction(date, res.getString(res.getColumnIndex("acc_no")),ExpenseType.INCOME , res.getDouble(res.getColumnIndex("amount")));
             }
             array_list.add(account);
             res.moveToNext();
@@ -177,7 +177,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public boolean isAccountValid(String accountNo) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "select * from account where account_no= '"+accountNo +"' and deleted=0", null );
+        Cursor res =  db.rawQuery( "select * from account where acc_no= '"+accountNo +"' and deleted=0", null );
         res.moveToFirst();
         while(res.isAfterLast() == false){
             return true;
@@ -186,165 +186,3 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
 }
-
-/*
-
-public class DatabaseHelper extends SQLiteOpenHelper{
-    public static final String DATABASE_NAME = "Expensemanager.db";
-    public static final String TABLE1_NAME = "account_table";
-    public static final String TABLE2_NAME = "transaction_table";
-
-    public DatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, 1);
-
-    }
-
-    @Override
-    public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        sqLiteDatabase.execSQL("create table if not exists account_table (accountNo varchar(20) primary key, bankName text(20), accountHolderName text(50), balance numeric(12,2), deleted INT(1) default 0)");
-        sqLiteDatabase.execSQL("create table if not exists transaction_table (transactionID INTEGER primary key AUTOINCREMENT, date Date, accountNo varchar(20), expenseType text(20), amount numeric(12,2), deleted INT(1) default 0, FOREIGN KEY(accountNo) REFERENCES account_table(accountNo))");
-    }
-
-    @Override
-    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS account_table");
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS transaction_table");
-        onCreate(sqLiteDatabase);
-    }
-
-    public void  insertAccount(Account account){
-        SQLiteDatabase database = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put("accountNo", account.getAccountNo());
-        values.put("bankName", account.getBankName());
-        values.put("accountHolderName", account.getAccountHolderName());
-        values.put("balance", account.getBalance());
-        database.insert("account_table", null, values);
-    }
-
-    public void insertTransaction(String date, String accountNo, String expenseType, double amount){
-        SQLiteDatabase database = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put("date", date);
-        values.put("accountNo", accountNo);
-        values.put("expenseType", expenseType);
-        values.put("amount", amount);
-        database.insert("transaction_table", null, values);
-    }
-
-    List<Transaction> getAllTransactions() {
-        ArrayList<Transaction> array_list = new ArrayList<Transaction>();
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "select * from transaction_table", null );
-        res.moveToFirst();
-        while(res.isAfterLast() == false){
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
-            Date date = null;
-            try {
-                date = dateFormat.parse(res.getString(res.getColumnIndex("date")));
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            Transaction t;
-            if(res.getString(res.getColumnIndex("expenseType"))== "EXPENSE") {
-                t = new Transaction(date, res.getString(res.getColumnIndex("accountNo")),ExpenseType.EXPENSE , res.getDouble(res.getColumnIndex("amount")));
-            }else{
-                t = new Transaction(date, res.getString(res.getColumnIndex("accountNo")),ExpenseType.INCOME , res.getDouble(res.getColumnIndex("amount")));
-            }
-            array_list.add(t);
-            res.moveToNext();
-        }
-        return array_list;
-    }
-
-    public ArrayList<Transaction> getAllTransactionsLimited(int limit) {
-        ArrayList<Transaction> array_list = new ArrayList<Transaction>();
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "select * from transaction_table order by transactionID DESC LIMIT "+Integer.toString(limit), null );
-        res.moveToFirst();
-        while(res.isAfterLast() == false){
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
-            Date date = null;
-            try {
-                date = dateFormat.parse(res.getString(res.getColumnIndex("date")));
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            Transaction t;
-            if(res.getString(res.getColumnIndex("expenseType"))== "EXPENSE") {
-                t = new Transaction(date, res.getString(res.getColumnIndex("accountNo")),ExpenseType.EXPENSE , res.getDouble(res.getColumnIndex("amount")));
-            }else{
-                t = new Transaction(date, res.getString(res.getColumnIndex("accountNo")),ExpenseType.INCOME , res.getDouble(res.getColumnIndex("amount")));
-            }
-            array_list.add(t);
-            res.moveToNext();
-        }
-        return array_list;
-    }
-
-    public ArrayList<String> getAllAccountNumbers() {
-        ArrayList<String> array_list = new ArrayList<String>();
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "select * from account_table", null );
-        res.moveToFirst();
-
-        while(res.isAfterLast() == false){
-            array_list.add(res.getString(res.getColumnIndex("accountNo")));
-            res.moveToNext();
-        }
-        return array_list;
-    }
-
-    public ArrayList<Account> getAllAccounts() {
-        ArrayList<Account> array_list = new ArrayList<Account>();
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "select * from account_table", null );
-        res.moveToFirst();
-
-        while(res.isAfterLast() == false){
-            Account account = new Account(res.getString(res.getColumnIndex("accountNo")),res.getString(res.getColumnIndex("bankName")),res.getString(res.getColumnIndex("accountHolderName")),res.getDouble(res.getColumnIndex("balance")));
-            array_list.add(account);
-            res.moveToNext();
-        }
-        return array_list;
-    }
-
-    public Account getAccount(String accountNo) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "select * from account_table where accountNo= '"+accountNo +"' ", null );
-        res.moveToFirst();
-        while(res.isAfterLast() == false){
-            Account account = new Account(res.getString(res.getColumnIndex("accountNo")),res.getString(res.getColumnIndex("bankName")),res.getString(res.getColumnIndex("accountHolderName")),res.getDouble(res.getColumnIndex("balance")));
-            return account;
-        }
-        return null;
-    }
-
-    public boolean isAccountValid(String accountNo) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "select * from account_table where accountNo= '"+accountNo +"' ", null );
-        res.moveToFirst();
-        while(res.isAfterLast() == false){
-            return true;
-        }
-        return false;
-    }
-
-    public boolean deleteAccount (String account_no) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("deleted", 1);
-        db.update("account_table", contentValues, "accountNo = ? ", new String[]{account_no});
-        return true;
-    }
-
-    public boolean updateBalance (String account_no,double balance) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("balance", balance);
-        db.update("account_table", contentValues, "accountNo = ? ", new String[]{account_no});
-        return true;
-    }
-
-}
-*/
